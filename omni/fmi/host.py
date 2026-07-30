@@ -65,6 +65,7 @@ class FmiUsdHost:
                 continue
             self._runtimes.append((inst, runtime))
             self._append(f"Attached {inst.prim_path} -> {inst.asset_path} (FMI {runtime.version}).")
+            self._log_variables(runtime)
         self._time = 0.0
         self._outputs.clear()
         return len(self._runtimes)
@@ -95,6 +96,38 @@ class FmiUsdHost:
     @property
     def instance_count(self) -> int:
         return len(self._runtimes)
+
+    # ------------------------------------------------------------- introspection
+    def _log_variables(self, runtime):
+        """Log the FMU's variable names by causality (what you can map in the schema)."""
+        for causality in ("input", "output", "parameter"):
+            names = runtime.variables(causality)
+            if not names:
+                continue
+            preview = ", ".join(names[:12])
+            more = f" (+{len(names) - 12} more)" if len(names) > 12 else ""
+            self._append(f"  {causality}s: {preview}{more}")
+
+    def describe_variables(self) -> Dict[str, Dict[str, List[str]]]:
+        """{prim_path: {causality: [names]}} for every attached FMU.
+
+        Use this to discover the exact `fmi:fmuAttribute` names to author in the
+        USD-FMI schema -- especially for a tool-exported FMU (e.g. Flownex):
+
+            from omni.fmi import FmiUsdHost
+            host = FmiUsdHost(); host.attach()
+            for prim, groups in host.describe_variables().items():
+                print(prim)
+                for causality, names in groups.items():
+                    print(" ", causality, names)
+        """
+        described: Dict[str, Dict[str, List[str]]] = {}
+        for inst, runtime in self._runtimes:
+            described[inst.prim_path] = {
+                causality: runtime.variables(causality)
+                for causality in ("input", "output", "parameter", "local")
+            }
+        return described
 
     # ------------------------------------------------------------------- stepping
     def step(self, dt: Optional[float] = None, stage=None) -> float:

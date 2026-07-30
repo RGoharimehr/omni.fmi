@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2026 Reza Goharimehr <rgoharim@villanova.edu>
 # SPDX-License-Identifier: Apache-2.0
 """Kit UI for omni.fmi: load a stage with FMI schema, step FMUs, color with fastcolor."""
+import time
+
 import omni.ext
 import omni.ui as ui
 import omni.kit.app
@@ -15,6 +17,7 @@ class FmiUsdExtension(omni.ext.IExt):
         self._coloring = None          # created lazily (needs omni.fastcolor)
         self._playing = False
         self._accum = 0.0
+        self._last_wall = None
         self._sub = None
         self._status = None
         self._attr_combo = None
@@ -58,6 +61,11 @@ class FmiUsdExtension(omni.ext.IExt):
                 ui.Spacer(width=10)
                 self._play_button = ui.Button("Play", width=70, clicked_fn=self._on_toggle_play)
                 ui.Button("Step", width=70, clicked_fn=self._on_step_once)
+
+            with ui.HStack(height=22, spacing=4):
+                self._realtime = ui.CheckBox(width=18)
+                self._realtime.model.set_value(True)
+                ui.Label("Real-time pacing (advance by wall-clock, not per frame)")
 
             ui.Separator(height=2)
             ui.Label("Coloring (omni.fastcolor)", style={"font_size": 16})
@@ -127,6 +135,9 @@ class FmiUsdExtension(omni.ext.IExt):
     def _on_toggle_play(self):
         self._playing = not self._playing
         self._play_button.text = "Pause" if self._playing else "Play"
+        # Reset the wall-clock accumulator so a long pause doesn't burst-step.
+        self._last_wall = time.perf_counter()
+        self._accum = 0.0
 
     def _on_step_once(self):
         self._do_step()
@@ -141,19 +152,41 @@ class FmiUsdExtension(omni.ext.IExt):
             self._coloring.set_orientation("horizontal" if idx == 1 else "vertical")
 
     # --------------------------------------------------------------------- stepping
+    _MAX_SUBSTEPS = 8   # cap so a hitch can't trigger a death-spiral of catch-up steps
+
     def _on_update(self, _event):
         if not self._playing or self._host.instance_count == 0:
             return
         dt = max(1e-4, self._dt_field.model.get_value_as_float())
-        self._do_step(dt)
 
-    def _do_step(self, dt=None):
+        if not self._realtime.model.get_value_as_bool():
+            self._do_step(dt)                      # legacy: one step per rendered frame
+            return
+
+        now = time.perf_counter()
+        elapsed = now - (self._last_wall if self._last_wall is not None else now)
+        self._last_wall = now
+        self._accum += elapsed
+
+        substeps = 0
+        while self._accum >= dt and substeps < self._MAX_SUBSTEPS:
+            self._accum -= dt
+            substeps += 1
+
+        if self._accum > dt * self._MAX_SUBSTEPS:   # too far behind: drop the backlog
+            self._accum = 0.0
+        if substeps:
+            self._do_step(dt, substeps=substeps)
+
+    def _do_step(self, dt=None, substeps=1):
         if self._host.instance_count == 0:
             self._set_status("No FMUs attached.")
             return
         dt = dt if dt is not None else max(1e-4, self._dt_field.model.get_value_as_float())
         try:
-            t = self._host.step(dt)
+            # Advance the solver `substeps` times, but refresh UI/coloring only once.
+            for _ in range(max(1, int(substeps))):
+                t = self._host.step(dt)
         except Exception as error:
             self._playing = False
             self._play_button.text = "Play"
