@@ -5,7 +5,7 @@ title = "FMI on USD"
 description = "Load FMI/FMU co-simulation models declared on an OpenUSD stage (ovfmi-style schema), step them with FMPy, and color results with omni.fastcolor. Kit extension."
 keywords = ["fmi", "fmu", "co-simulation", "usd", "digital-twin", "fmpy", "simulation", "flownex"]
 authors = ["Reza Goharimehr <rgoharim@villanova.edu>"]
-repository = ""
+repository = "https://github.com/RGoharimehr/omni.fmi"
 changelog = "CHANGELOG.md"
 readme = "README.md"
 
