@@ -1,0 +1,45 @@
+#usda 1.0
+(
+    doc = "omni.fmi demo: a BouncingBall FMU drives a sphere. Put BouncingBall.fmu next to this file (see README), then Attach FMUs + Play. Height (h) moves the sphere in Y; velocity (v) is written to sim:value for coloring."
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Xform "World"
+{
+    def FmuInstance "BallFmu"
+    {
+        bool fmi:enabled = 1
+        asset fmi:fmu = @./BouncingBall.fmu@
+
+        def FmuConnection "BallConn"
+        {
+            rel fmi:targets = </World/Ball>
+
+            def FmuMapping "Height"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "h"
+                token fmi:usdAttribute = "xformOp:translate"
+                int2 fmi:usdMapping = (1, 1)
+            }
+
+            def FmuMapping "Speed"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "v"
+                token fmi:usdAttribute = "sim:value"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+    }
+
+    def Sphere "Ball"
+    {
+        double radius = 0.2
+        custom double sim:value = 0.0
+        double3 xformOp:translate = (0, 1, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+}

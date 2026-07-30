@@ -1,0 +1,23 @@
+[package]
+version = "0.1.0"
+category = "Simulation"
+title = "FMI on USD"
+description = "Load FMI/FMU co-simulation models declared on an OpenUSD stage (ovfmi-style schema), step them with FMPy, and color results with omni.fastcolor. Kit extension."
+keywords = ["fmi", "fmu", "co-simulation", "usd", "digital-twin", "fmpy", "simulation", "flownex"]
+authors = ["Reza Goharimehr <rgoharim@villanova.edu>"]
+repository = ""
+changelog = "CHANGELOG.md"
+readme = "README.md"
+
+[dependencies]
+"omni.usd" = {}
+"omni.ui" = {}
+"omni.kit.uiapp" = {}
+"omni.fastcolor" = {}
+
+[[python.module]]
+name = "omni.fmi"
+
+[python.pipapi]
+requirements = ["fmpy"]
+use_online_index = true
