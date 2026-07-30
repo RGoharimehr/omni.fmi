@@ -63,7 +63,9 @@ class FmiUsdExtension(omni.ext.IExt):
             ui.Label("Coloring (omni.fastcolor)", style={"font_size": 16})
             with ui.HStack(height=24):
                 ui.Label("Color by:", width=70)
-                self._attr_combo = ui.ComboBox(0)      # populated after first step
+                self._attr_container = ui.HStack()     # combo rebuilt in here after first step
+                self._attr_combo = None
+                self._attr_options = []
             with ui.HStack(height=24):
                 ui.Label("Colormap:", width=70)
                 self._cmap_combo = ui.ComboBox(0, *self._cmaps)
@@ -165,20 +167,18 @@ class FmiUsdExtension(omni.ext.IExt):
 
     def _refresh_attr_combo(self):
         attrs = self._host.output_attributes()
-        current = getattr(self, "_attr_options", None)
-        if attrs and attrs != current:
-            self._attr_options = attrs
-            # rebuild the combo items
-            self._attr_combo.model.clear()  # best-effort; some Kit versions require rebuild
-            try:
-                for a in attrs:
-                    self._attr_combo.model.append_child_item(None, ui.SimpleStringModel(a))
-            except Exception:
-                pass
+        if not attrs or attrs == getattr(self, "_attr_options", []):
+            return
+        # omni.ui ComboBox items can't be mutated (no model.clear on all Kit
+        # versions), so rebuild the whole widget inside its container.
+        self._attr_options = attrs
+        self._attr_container.clear()
+        with self._attr_container:
+            self._attr_combo = ui.ComboBox(0, *attrs)
 
     def _selected_attribute(self):
         attrs = getattr(self, "_attr_options", [])
-        if not attrs:
+        if not attrs or self._attr_combo is None:
             return None
         idx = self._attr_combo.model.get_item_value_model().as_int
         return attrs[idx] if 0 <= idx < len(attrs) else attrs[0]
