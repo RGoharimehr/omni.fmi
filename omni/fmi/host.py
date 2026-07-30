@@ -34,8 +34,14 @@ class FmiUsdHost:
         self.dt = float(dt)
         self._runtimes: List[Tuple[FmuInstance, FmuRuntime]] = []
         self._outputs: Dict[Tuple[str, str], float] = {}   # (prim_path, usd_attr) -> value
+        self._output_meta: Dict[Tuple[str, str], str] = {}  # (prim_path, usd_attr) -> fmu_attr
         self._time = 0.0
         self._log: List[str] = []
+
+        # time-history recording
+        self.recording = False
+        self.max_history = 20000
+        self.history: List[Dict[str, float]] = []
 
     # ------------------------------------------------------------------- logging
     def log_text(self) -> str:
@@ -78,6 +84,7 @@ class FmiUsdHost:
                 pass
         self._runtimes.clear()
         self._outputs.clear()
+        self._output_meta.clear()
         self._time = 0.0
 
     def reset(self):
@@ -88,6 +95,7 @@ class FmiUsdHost:
                 pass
         self._time = 0.0
         self._outputs.clear()
+        self.history.clear()   # time restarts, so old samples would be misleading
 
     @property
     def time(self) -> float:
@@ -133,6 +141,7 @@ class FmiUsdHost:
     def step(self, dt: Optional[float] = None, stage=None) -> float:
         dt = self.dt if dt is None else float(dt)
         stage = stage or _get_stage()
+        sample: Dict[str, float] = {}
 
         for inst, runtime in self._runtimes:
             # 1) USD inputs -> FMU
@@ -149,7 +158,7 @@ class FmiUsdHost:
             # 2) advance
             runtime.do_step(dt)
 
-            # 3) FMU outputs -> USD (+ cache for coloring)
+            # 3) FMU outputs -> USD (+ cache for coloring / table / history)
             for conn in inst.connections:
                 if not conn.enabled:
                     continue
@@ -159,12 +168,121 @@ class FmiUsdHost:
                     value = runtime.get_output(m.fmu_attribute)
                     if value is None:
                         continue
+                    if self.recording and isinstance(value, (int, float)):
+                        sample[m.fmu_attribute] = float(value)
                     for prim_path in conn.targets:
                         self._outputs[(prim_path, m.usd_attribute)] = value
+                        self._output_meta[(prim_path, m.usd_attribute)] = m.fmu_attribute
                         self._write_usd(stage, prim_path, m, value)
 
         self._time += dt
+
+        if self.recording and len(sample) > 1:
+            sample["time"] = self._time
+            self.history.append(sample)
+            if len(self.history) > self.max_history:
+                del self.history[: len(self.history) - self.max_history]
+
         return self._time
+
+    # --------------------------------------------------------------- inputs / outputs
+    def input_bindings(self, stage=None) -> List[Dict[str, object]]:
+        """Every schema-mapped FMU input, with the USD attribute driving it.
+
+        [{fmu_attribute, prim_path, usd_attribute, value, instance}] -- the UI edits
+        `value` by writing the USD attribute, so the stage stays the single source
+        of truth and the next step() picks it up.
+        """
+        stage = stage or _get_stage()
+        bindings: List[Dict[str, object]] = []
+        seen = set()
+        for inst, _runtime in self._runtimes:
+            for conn in inst.connections:
+                if not conn.enabled:
+                    continue
+                for m in conn.mappings:
+                    if m.direction != "input" or not conn.targets:
+                        continue
+                    prim_path = conn.targets[0]
+                    key = (prim_path, m.usd_attribute)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    value = None
+                    prim = stage.GetPrimAtPath(prim_path)
+                    if prim and prim.IsValid():
+                        attr = prim.GetAttribute(m.usd_attribute)
+                        if attr:
+                            value = attr.Get()
+                    bindings.append({
+                        "fmu_attribute": m.fmu_attribute,
+                        "prim_path": prim_path,
+                        "usd_attribute": m.usd_attribute,
+                        "value": value,
+                        "instance": inst.prim_path,
+                    })
+        return bindings
+
+    def set_usd_value(self, prim_path: str, usd_attribute: str, value: float, stage=None) -> bool:
+        """Write a USD attribute (used by the UI to drive a mapped FMU input)."""
+        stage = stage or _get_stage()
+        prim = stage.GetPrimAtPath(prim_path)
+        if not prim or not prim.IsValid():
+            return False
+        attr = prim.GetAttribute(usd_attribute)
+        if not attr:
+            return False
+        attr.Set(float(value))
+        return True
+
+    def output_values(self) -> List[Dict[str, object]]:
+        """Latest outputs for a results table:
+        [{fmu_attribute, prim_path, usd_attribute, value}] sorted by FMU variable."""
+        rows = []
+        for (prim_path, usd_attr), value in self._outputs.items():
+            rows.append({
+                "fmu_attribute": self._output_meta.get((prim_path, usd_attr), usd_attr),
+                "prim_path": prim_path,
+                "usd_attribute": usd_attr,
+                "value": value,
+            })
+        rows.sort(key=lambda r: (str(r["fmu_attribute"]), str(r["prim_path"])))
+        return rows
+
+    # --------------------------------------------------------------------- history
+    def clear_history(self) -> None:
+        self.history.clear()
+
+    def history_keys(self) -> List[str]:
+        """Recorded variable names (excluding 'time')."""
+        keys = set()
+        for row in self.history:
+            keys.update(row.keys())
+        keys.discard("time")
+        return sorted(keys)
+
+    def history_series(self, key: str, max_points: int = 500):
+        """(times, values) for one recorded variable, decimated to max_points."""
+        rows = [r for r in self.history if key in r]
+        if not rows:
+            return [], []
+        stride = max(1, len(rows) // max_points)
+        rows = rows[::stride]
+        return [r.get("time", 0.0) for r in rows], [r[key] for r in rows]
+
+    def export_csv(self, path: str) -> int:
+        """Write the recorded history to CSV. Returns the number of rows written."""
+        import csv as _csv
+
+        if not self.history:
+            return 0
+        keys = ["time"] + self.history_keys()
+        with open(path, "w", newline="", encoding="utf-8") as handle:
+            writer = _csv.DictWriter(handle, fieldnames=keys, extrasaction="ignore")
+            writer.writeheader()
+            for row in self.history:
+                writer.writerow(row)
+        return len(self.history)
 
     # ------------------------------------------------------------------- coloring hooks
     def output_attributes(self) -> List[str]:
