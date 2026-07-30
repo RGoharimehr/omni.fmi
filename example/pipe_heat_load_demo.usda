@@ -15,6 +15,7 @@ def Xform "World"
         custom double sim:mass_flow = 0.05
         custom double sim:inlet_temp = 25.0
         custom double sim:sat_temp = 60.0
+        custom double sim:latent_heat = 2260000.0
         double3 xformOp:translate = (0, 1.5, 0)
         uniform token[] xformOpOrder = ["xformOp:translate"]
     }
@@ -53,6 +54,13 @@ def Xform "World"
                 token fmi:direction = "input"
                 token fmi:fmuAttribute = "T_sat"
                 token fmi:usdAttribute = "sim:sat_temp"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "LatentHeat"
+            {
+                token fmi:direction = "input"
+                token fmi:fmuAttribute = "h_fg"
+                token fmi:usdAttribute = "sim:latent_heat"
                 int2 fmi:usdMapping = (0, 0)
             }
         }

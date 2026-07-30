@@ -35,6 +35,9 @@
     <ScalarVariable name="p_in" valueReference="3" causality="input" variability="continuous" description="Inlet pressure [kPa]">
       <Real start="200.0"/>
     </ScalarVariable>
+    <ScalarVariable name="h_fg" valueReference="13" causality="input" variability="continuous" description="Latent heat of vaporization [J/kg] - fluid property, drivable from USD">
+      <Real start="2260000.0"/>
+    </ScalarVariable>
 
     <!-- parameters (5-11) -->
     <ScalarVariable name="L" valueReference="10" causality="parameter" variability="fixed" initial="exact" description="Pipe length [m]">
@@ -45,9 +48,6 @@
     </ScalarVariable>
     <ScalarVariable name="cp" valueReference="12" causality="parameter" variability="fixed" initial="exact" description="Specific heat capacity [J/(kg.K)]">
       <Real start="4180.0"/>
-    </ScalarVariable>
-    <ScalarVariable name="h_fg" valueReference="13" causality="parameter" variability="fixed" initial="exact" description="Latent heat of vaporization [J/kg]">
-      <Real start="2260000.0"/>
     </ScalarVariable>
     <ScalarVariable name="T_sat" valueReference="14" causality="parameter" variability="tunable" initial="exact" description="Saturation temperature [degC]">
       <Real start="60.0"/>

@@ -34,6 +34,7 @@ def Xform "World"
         custom double sim:mass_flow = 0.05
         custom double sim:inlet_temp = 25.0
         custom double sim:sat_temp = 60.0
+        custom double sim:latent_heat = 2260000.0
         double3 xformOp:translate = (0, 1.5, 0)
         uniform token[] xformOpOrder = ["xformOp:translate"]
     }}
@@ -53,6 +54,7 @@ INPUT_MAPPINGS = [
     ("MassFlow", "m_dot", "sim:mass_flow"),
     ("InletTemp", "T_in", "sim:inlet_temp"),
     ("SatTemp", "T_sat", "sim:sat_temp"),
+    ("LatentHeat", "h_fg", "sim:latent_heat"),
 ]
 
 
