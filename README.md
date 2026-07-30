@@ -83,6 +83,38 @@ def FmuInstance "BallFmu"
 
 ---
 
+## Quick start — the heated-pipe example (flow network)
+
+`PipeHeatLoad.fmu` ships with this repo: a **heated pipe with evaporation**, discretized into 8
+segments, written in C and built as a self-contained **FMI 2.0 Co-Simulation** FMU. It stands in for
+a tool-exported flow-network FMU (e.g. Flownex) so the whole pipeline can be exercised today.
+
+| | Variables |
+|---|---|
+| **inputs** | `m_dot` (kg/s), `T_in` (°C), `Q_total` (W), `p_in` (kPa) |
+| **outputs** | `T_1..T_8` (°C), `x_1..x_8` (vapour quality), `T_out`, `x_out`, `dp_total` (kPa), `Q_absorbed` (W) |
+| **parameters** | `L`, `D`, `cp`, `h_fg`, `T_sat` (tunable), `rho`, `tau` (tunable) |
+
+Each segment maps to its own pipe prim, so you can **colour the pipe along its length**:
+
+1. Open [`example/pipe_heat_load_demo.usda`](example/pipe_heat_load_demo.usda) → **Attach FMUs** → **Play**.
+2. **Color by** `sim:value` → the thermal gradient along the pipe.
+   **Color by** `sim:quality` → the vapour fraction, i.e. where it boils.
+3. Edit `/World/Controls` live while it runs:
+   - `sim:heat_load` 3000 → 30000 W: the pipe heats up and starts boiling.
+   - `sim:sat_temp` 60 → 90 °C: **the boiling front moves downstream**.
+   - `sim:mass_flow`, `sim:inlet_temp`: the usual operating conditions.
+
+Rebuild the FMU (needs MSVC) and regenerate the stage with:
+
+```bash
+powershell -ExecutionPolicy Bypass -File fmu/pipe_heat_load/build.ps1
+```
+
+Validate it without Kit — `fmu/pipe_heat_load/validate.py` checks the physics via FMPy, and
+`tests/test_pipeline.py` runs the **whole `FmiUsdHost` data path** on plain `pxr` + `fmpy`
+(`pip install usd-core fmpy`).
+
 ## Quick start — the BouncingBall example
 
 1. Get a `BouncingBall.fmu` (FMI 3.0 CS) from the Modelica **reference-fmus** releases

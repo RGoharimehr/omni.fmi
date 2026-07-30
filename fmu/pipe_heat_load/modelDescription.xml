@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="PipeHeatLoad"
+  guid="{7f2a1c64-51d3-4a9e-9d21-6c3b8e5f0a11}"
+  description="Heated pipe with evaporation, discretized into 8 segments. Stand-in for a tool-exported flow-network FMU."
+  author="Reza Goharimehr"
+  version="1.0"
+  generationTool="handwritten C (FMI 2.0 CS)"
+  variableNamingConvention="flat"
+  numberOfEventIndicators="0">
+
+  <CoSimulation
+    modelIdentifier="PipeHeatLoad"
+    canHandleVariableCommunicationStepSize="true"
+    canBeInstantiatedOnlyOncePerProcess="false"
+    canNotUseMemoryManagementFunctions="true"
+    canGetAndSetFMUstate="true"
+    canSerializeFMUstate="true"
+    providesDirectionalDerivative="false"/>
+
+  <DefaultExperiment startTime="0.0" stopTime="120.0" stepSize="0.05"/>
+
+  <ModelVariables>
+    <!-- inputs (1-4) -->
+    <ScalarVariable name="m_dot" valueReference="0" causality="input" variability="continuous" description="Mass flow rate [kg/s]">
+      <Real start="0.05"/>
+    </ScalarVariable>
+    <ScalarVariable name="T_in" valueReference="1" causality="input" variability="continuous" description="Inlet temperature [degC]">
+      <Real start="25.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="Q_total" valueReference="2" causality="input" variability="continuous" description="Total heat load [W]">
+      <Real start="5000.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="p_in" valueReference="3" causality="input" variability="continuous" description="Inlet pressure [kPa]">
+      <Real start="200.0"/>
+    </ScalarVariable>
+
+    <!-- parameters (5-11) -->
+    <ScalarVariable name="L" valueReference="10" causality="parameter" variability="fixed" initial="exact" description="Pipe length [m]">
+      <Real start="2.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="D" valueReference="11" causality="parameter" variability="fixed" initial="exact" description="Pipe inner diameter [m]">
+      <Real start="0.012"/>
+    </ScalarVariable>
+    <ScalarVariable name="cp" valueReference="12" causality="parameter" variability="fixed" initial="exact" description="Specific heat capacity [J/(kg.K)]">
+      <Real start="4180.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="h_fg" valueReference="13" causality="parameter" variability="fixed" initial="exact" description="Latent heat of vaporization [J/kg]">
+      <Real start="2260000.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="T_sat" valueReference="14" causality="parameter" variability="tunable" initial="exact" description="Saturation temperature [degC]">
+      <Real start="60.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="rho" valueReference="15" causality="parameter" variability="fixed" initial="exact" description="Liquid density [kg/m3]">
+      <Real start="997.0"/>
+    </ScalarVariable>
+    <ScalarVariable name="tau" valueReference="16" causality="parameter" variability="tunable" initial="exact" description="Thermal time constant [s]">
+      <Real start="2.0"/>
+    </ScalarVariable>
+
+    <!-- segment temperatures (12-19) -->
+    <ScalarVariable name="T_1" valueReference="20" causality="output" variability="continuous" initial="calculated" description="Segment 1 temperature [degC]"><Real/></ScalarVariable>
+    <ScalarVariable name="T_2" valueReference="21" causality="output" variability="continuous" initial="calculated" description="Segment 2 temperature [degC]"><Real/></ScalarVariable>
+    <ScalarVariable name="T_3" valueReference="22" causality="output" variability="continuous" initial="calculated" description="Segment 3 temperature [degC]"><Real/></ScalarVariable>
+    <ScalarVariable name="T_4" valueReference="23" causality="output" variability="continuous" initial="calculated" description="Segment 4 temperature [degC]"><Real/></ScalarVariable>
+    <ScalarVariable name="T_5" valueReference="24" causality="output" variability="continuous" initial="calculated" description="Segment 5 temperature [degC]"><Real/></ScalarVariable>
+    <ScalarVariable name="T_6" valueReference="25" causality="output" variability="continuous" initial="calculated" description="Segment 6 temperature [degC]"><Real/></ScalarVariable>
+    <ScalarVariable name="T_7" valueReference="26" causality="output" variability="continuous" initial="calculated" description="Segment 7 temperature [degC]"><Real/></ScalarVariable>
+    <ScalarVariable name="T_8" valueReference="27" causality="output" variability="continuous" initial="calculated" description="Segment 8 temperature [degC]"><Real/></ScalarVariable>
+
+    <!-- segment vapor qualities (20-27) -->
+    <ScalarVariable name="x_1" valueReference="30" causality="output" variability="continuous" initial="calculated" description="Segment 1 vapor quality [-]"><Real/></ScalarVariable>
+    <ScalarVariable name="x_2" valueReference="31" causality="output" variability="continuous" initial="calculated" description="Segment 2 vapor quality [-]"><Real/></ScalarVariable>
+    <ScalarVariable name="x_3" valueReference="32" causality="output" variability="continuous" initial="calculated" description="Segment 3 vapor quality [-]"><Real/></ScalarVariable>
+    <ScalarVariable name="x_4" valueReference="33" causality="output" variability="continuous" initial="calculated" description="Segment 4 vapor quality [-]"><Real/></ScalarVariable>
+    <ScalarVariable name="x_5" valueReference="34" causality="output" variability="continuous" initial="calculated" description="Segment 5 vapor quality [-]"><Real/></ScalarVariable>
+    <ScalarVariable name="x_6" valueReference="35" causality="output" variability="continuous" initial="calculated" description="Segment 6 vapor quality [-]"><Real/></ScalarVariable>
+    <ScalarVariable name="x_7" valueReference="36" causality="output" variability="continuous" initial="calculated" description="Segment 7 vapor quality [-]"><Real/></ScalarVariable>
+    <ScalarVariable name="x_8" valueReference="37" causality="output" variability="continuous" initial="calculated" description="Segment 8 vapor quality [-]"><Real/></ScalarVariable>
+
+    <!-- aggregate outputs (28-31) -->
+    <ScalarVariable name="T_out" valueReference="40" causality="output" variability="continuous" initial="calculated" description="Outlet temperature [degC]"><Real/></ScalarVariable>
+    <ScalarVariable name="x_out" valueReference="41" causality="output" variability="continuous" initial="calculated" description="Outlet vapor quality [-]"><Real/></ScalarVariable>
+    <ScalarVariable name="dp_total" valueReference="42" causality="output" variability="continuous" initial="calculated" description="Total pressure drop [kPa]"><Real/></ScalarVariable>
+    <ScalarVariable name="Q_absorbed" valueReference="43" causality="output" variability="continuous" initial="calculated" description="Absorbed power [W]"><Real/></ScalarVariable>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>
+      <Unknown index="12"/><Unknown index="13"/><Unknown index="14"/><Unknown index="15"/>
+      <Unknown index="16"/><Unknown index="17"/><Unknown index="18"/><Unknown index="19"/>
+      <Unknown index="20"/><Unknown index="21"/><Unknown index="22"/><Unknown index="23"/>
+      <Unknown index="24"/><Unknown index="25"/><Unknown index="26"/><Unknown index="27"/>
+      <Unknown index="28"/><Unknown index="29"/><Unknown index="30"/><Unknown index="31"/>
+    </Outputs>
+  </ModelStructure>
+
+</fmiModelDescription>

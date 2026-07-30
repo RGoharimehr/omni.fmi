@@ -1,0 +1,296 @@
+#usda 1.0
+(
+    doc = "omni.fmi demo: a heated pipe (PipeHeatLoad.fmu) split into 8 segments. Each segment prim receives its own temperature (sim:value) and vapour quality (sim:quality) from the FMU. Attach FMUs, press Play, then colour by sim:value for the thermal gradient or sim:quality for the boiling front. Drive it live from /World/Controls."
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Xform "World"
+{
+    # Edit these while playing to drive the simulation.
+    def Xform "Controls"
+    {
+        custom double sim:heat_load = 5000.0
+        custom double sim:mass_flow = 0.05
+        custom double sim:inlet_temp = 25.0
+        custom double sim:sat_temp = 60.0
+        double3 xformOp:translate = (0, 1.5, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def FmuInstance "PipeFmu"
+    {
+        bool fmi:enabled = 1
+        asset fmi:fmu = @./PipeHeatLoad.fmu@
+
+        def FmuConnection "Inputs"
+        {
+            rel fmi:targets = </World/Controls>
+            def FmuMapping "HeatLoad"
+            {
+                token fmi:direction = "input"
+                token fmi:fmuAttribute = "Q_total"
+                token fmi:usdAttribute = "sim:heat_load"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "MassFlow"
+            {
+                token fmi:direction = "input"
+                token fmi:fmuAttribute = "m_dot"
+                token fmi:usdAttribute = "sim:mass_flow"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "InletTemp"
+            {
+                token fmi:direction = "input"
+                token fmi:fmuAttribute = "T_in"
+                token fmi:usdAttribute = "sim:inlet_temp"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "SatTemp"
+            {
+                token fmi:direction = "input"
+                token fmi:fmuAttribute = "T_sat"
+                token fmi:usdAttribute = "sim:sat_temp"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+
+        def FmuConnection "Seg01"
+        {
+            rel fmi:targets = </World/Pipe/Seg_01>
+            def FmuMapping "Temp"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "T_1"
+                token fmi:usdAttribute = "sim:value"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "Quality"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "x_1"
+                token fmi:usdAttribute = "sim:quality"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+
+        def FmuConnection "Seg02"
+        {
+            rel fmi:targets = </World/Pipe/Seg_02>
+            def FmuMapping "Temp"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "T_2"
+                token fmi:usdAttribute = "sim:value"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "Quality"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "x_2"
+                token fmi:usdAttribute = "sim:quality"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+
+        def FmuConnection "Seg03"
+        {
+            rel fmi:targets = </World/Pipe/Seg_03>
+            def FmuMapping "Temp"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "T_3"
+                token fmi:usdAttribute = "sim:value"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "Quality"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "x_3"
+                token fmi:usdAttribute = "sim:quality"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+
+        def FmuConnection "Seg04"
+        {
+            rel fmi:targets = </World/Pipe/Seg_04>
+            def FmuMapping "Temp"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "T_4"
+                token fmi:usdAttribute = "sim:value"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "Quality"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "x_4"
+                token fmi:usdAttribute = "sim:quality"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+
+        def FmuConnection "Seg05"
+        {
+            rel fmi:targets = </World/Pipe/Seg_05>
+            def FmuMapping "Temp"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "T_5"
+                token fmi:usdAttribute = "sim:value"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "Quality"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "x_5"
+                token fmi:usdAttribute = "sim:quality"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+
+        def FmuConnection "Seg06"
+        {
+            rel fmi:targets = </World/Pipe/Seg_06>
+            def FmuMapping "Temp"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "T_6"
+                token fmi:usdAttribute = "sim:value"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "Quality"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "x_6"
+                token fmi:usdAttribute = "sim:quality"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+
+        def FmuConnection "Seg07"
+        {
+            rel fmi:targets = </World/Pipe/Seg_07>
+            def FmuMapping "Temp"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "T_7"
+                token fmi:usdAttribute = "sim:value"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "Quality"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "x_7"
+                token fmi:usdAttribute = "sim:quality"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+
+        def FmuConnection "Seg08"
+        {
+            rel fmi:targets = </World/Pipe/Seg_08>
+            def FmuMapping "Temp"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "T_8"
+                token fmi:usdAttribute = "sim:value"
+                int2 fmi:usdMapping = (0, 0)
+            }
+            def FmuMapping "Quality"
+            {
+                token fmi:direction = "output"
+                token fmi:fmuAttribute = "x_8"
+                token fmi:usdAttribute = "sim:quality"
+                int2 fmi:usdMapping = (0, 0)
+            }
+        }
+    }
+
+    def Xform "Pipe"
+    {
+        def Cylinder "Seg_01"
+        {
+            uniform token axis = "X"
+            double height = 0.5
+            double radius = 0.07
+            custom double sim:value = 25.0
+            custom double sim:quality = 0.0
+            double3 xformOp:translate = (0.00, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Cylinder "Seg_02"
+        {
+            uniform token axis = "X"
+            double height = 0.5
+            double radius = 0.07
+            custom double sim:value = 25.0
+            custom double sim:quality = 0.0
+            double3 xformOp:translate = (0.52, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Cylinder "Seg_03"
+        {
+            uniform token axis = "X"
+            double height = 0.5
+            double radius = 0.07
+            custom double sim:value = 25.0
+            custom double sim:quality = 0.0
+            double3 xformOp:translate = (1.04, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Cylinder "Seg_04"
+        {
+            uniform token axis = "X"
+            double height = 0.5
+            double radius = 0.07
+            custom double sim:value = 25.0
+            custom double sim:quality = 0.0
+            double3 xformOp:translate = (1.56, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Cylinder "Seg_05"
+        {
+            uniform token axis = "X"
+            double height = 0.5
+            double radius = 0.07
+            custom double sim:value = 25.0
+            custom double sim:quality = 0.0
+            double3 xformOp:translate = (2.08, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Cylinder "Seg_06"
+        {
+            uniform token axis = "X"
+            double height = 0.5
+            double radius = 0.07
+            custom double sim:value = 25.0
+            custom double sim:quality = 0.0
+            double3 xformOp:translate = (2.60, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Cylinder "Seg_07"
+        {
+            uniform token axis = "X"
+            double height = 0.5
+            double radius = 0.07
+            custom double sim:value = 25.0
+            custom double sim:quality = 0.0
+            double3 xformOp:translate = (3.12, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Cylinder "Seg_08"
+        {
+            uniform token axis = "X"
+            double height = 0.5
+            double radius = 0.07
+            custom double sim:value = 25.0
+            custom double sim:quality = 0.0
+            double3 xformOp:translate = (3.64, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+}

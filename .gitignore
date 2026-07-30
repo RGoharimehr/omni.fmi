@@ -12,3 +12,6 @@ Thumbs.db
 
 # USD scratch
 *.usdc.tmp
+
+# build artifacts
+fmu/*/build/
